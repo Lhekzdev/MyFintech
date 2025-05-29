@@ -7,7 +7,7 @@ const User = require("./models/UserModel")
 const Wallet = require("./models/WalletModel")
 const Transaction = require("./models/TransactionModel")
 const { Authorization, validateRegister } = require("./middlewares/userAuthorization")
-const { handleLogin, handleSignIn, handleTransaction } = require("./controllers/userContollers")
+const { handleLogin, handleSignIn, handleTransaction, handleViewBalance, handleTransactionHistory } = require("./controllers/userContollers")
 
 
 dotenv.config()
@@ -64,6 +64,24 @@ app.post("/transferlogic",Authorization, handleTransaction)
 
 
 // 3.Validate balances before transfers.
+
+
+
+// Milestone 3: Wallet & Transaction History
+
+
+
+// GET endpoint for viewing wallet balance.
+
+
+app.get("/viewingwalletbalance/:userId", Authorization, handleViewBalance )
+
+// GET endpoint to list past transactions.
+
+app.get("/list-past/transactions/:userId", Authorization, handleTransactionHistory)
+
+
+// Ensure authentication middleware is applied.
 
 
 

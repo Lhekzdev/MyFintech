@@ -5,6 +5,7 @@ const transactionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+    
   },
 
   sender: {
@@ -13,7 +14,11 @@ const transactionSchema = new mongoose.Schema({
     required: true,
   },
 
-  amount: { type: Number, default: 0 },
+  amount: { 
+    type: Number, default: 0 },
+
+
+    
   type: {
     type: String,
     enum: ["credit", "debit"],

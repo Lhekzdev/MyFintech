@@ -42,6 +42,8 @@ if(!token){
     })
 }
 
+
+
 console.log(token);
 
 const splitToken = token.split(" ")
@@ -69,6 +71,8 @@ console.log(user);
 req.user = user
 next()
  }
+
+
 
 
  module.exports ={

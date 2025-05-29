@@ -213,9 +213,91 @@ const handleTransaction = async (req, res) => {
     }
 }
 
+
+
+const handleViewBalance= async(req, res)=>{
+
+   try {const {userId} = req.params
+
+  const getUserId = await User.findById(userId)
+
+ .populate("firstName lastName") // optional: to get user details
+
+
+  
+
+
+    if (!getUserId) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+const getUserWallet = await Wallet.findOne({walletRef:getUserId._id})
+  if (!getUserWallet) {
+      return res.status(404).json({ message: 'Wallet not found for this user' });
+    }
+
+        return res.json({
+message: `Your wallet balance is displayed below `,
+balance: getUserWallet.balance,
+getUserWallet
+
+        })
+      } catch (error) {
+     console.error('Error fetching wallet balance:', error);
+        res.status(500).json({ message: 'Server error' });
+   }
+ 
+
+
+}
+
+const handleTransactionHistory =async(req,res)=>{
+   try {
+      const {userId} = req.params
+
+const pastTrasactions = await Transaction.find({
+   $or:[{sender:userId}, {receiver:userId}]
+})
+.populate("sender receiver") // optional: to get user details
+.sort({ createdAt: -1 }); 
+
+if(!pastTrasactions) {
+return res.status(400).json(
+  { message: "Transaction history empty"}
+)
+
+}
+
+res.json(
+  { message: "Trasanction history retrieved successfully",
+   count:pastTrasactions.length,
+   transactions: pastTrasactions
+
+
+}
+)
+      
+   } catch (error) {
+         console.error('History not retrieved:', error);
+        res.status(500).json({message: error.message });
+
+
+                        
+      
+   }
+
+
+}
+
+
+
 module.exports = {
     handleSignIn,
     handleLogin,
-    handleTransaction
+    handleTransaction,
+    handleViewBalance,
+    handleTransactionHistory
 
 }
+
+
