@@ -56,7 +56,10 @@ router.get("/list-past/transactions/:userId", Authorization, handleTransactionHi
 router.post("/verify-otp", verifyOTP);
 router.post("/forgot-password", requestPasswordReset);
 router.post("/reset-password", resetPassword);
-
+// welcome route
+router.get('/', (req, res) => {
+  res.status(200).json({ message: 'Welcome to Fintec App' });
+});
 
 module.exports = router
 
