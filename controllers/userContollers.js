@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken")
 const Wallet = require("../models/WalletModel")
 const Transaction = require("../models/TransactionModel")
 const mongoose = require("mongoose")
+const sendEmail = require("./utils/sendEmail")
+
 
 const handleSignIn = async (req, res) => {
     try {
@@ -33,7 +35,12 @@ const handleSignIn = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        const newUser = new User({ email, firstName, password: hashedPassword, lastName })
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            const otpExpires = Date.now() + 10 * 60 * 1000; // 10 mins
+
+        const newUser = new User({ email, firstName, password: hashedPassword, lastName,   otp,
+      otpExpires,
+      isVerified: false, })
 
 
 
@@ -46,18 +53,100 @@ const handleSignIn = async (req, res) => {
 
         })
 
-
-        res.json({
-            newUser: { email, firstName, lastName, hashedPassword, wallet }
-
-        })
+await sendEmail(email, "Verify Your Account", `Your OTP is: ${otp}`);
 
 
-    } catch (error) {
-        res.json({ message: error.message })
-    }
 
-}
+    res.status(201).json({ message: "Signup successful. Please verify OTP sent to your email." });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+    //     res.json({
+    //         newUser: { email, firstName, lastName, hashedPassword, wallet }
+
+    //     })
+
+
+    // } catch (error) {
+    //     res.json({ message: error.message })
+    // }
+
+// }
+
+
+
+// verifyOTP
+const verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user || user.otp !== otp || user.otpExpires < Date.now())
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+
+  user.isVerified = true;
+  user.otp = null;
+  user.otpExpires = null;
+
+  await user.save();
+
+  res.status(200).json({ message: "Account verified successfully" });
+};
+
+
+
+
+
+// requestPasswordReset
+const requestPasswordReset = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpires = Date.now() + 10 * 60 * 1000;
+
+  user.otp = otp;
+  user.otpExpires = otpExpires;
+  await user.save();
+
+  await sendEmail(email, "Password Reset OTP", `Your OTP is: ${otp}`);
+  res.status(200).json({ message: "OTP sent to email" });
+};
+
+
+
+
+// resetPassword
+
+const resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) return res.status(400).json({ message: "User not found" });
+
+//   console.log("Stored OTP:", user.otp);
+//   console.log("Entered OTP:", otp);
+//   console.log("OTP Expiry:", user.otpExpires, "Current Time:", Date.now());
+
+  if (String(user.otp) !== String(otp))
+    return res.status(400).json({ message: "Invalid OTP" });
+
+  if (user.otpExpires < Date.now())
+    return res.status(400).json({ message: "OTP has expired" });
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  user.password = hashedPassword;
+  user.otp = null;
+  user.otpExpires = null;
+
+  await user.save();
+  res.status(200).json({ message: "Password reset successful" });
+};
 
 
 
@@ -296,7 +385,10 @@ module.exports = {
     handleLogin,
     handleTransaction,
     handleViewBalance,
-    handleTransactionHistory
+    handleTransactionHistory,
+    verifyOTP,
+    resetPassword ,
+    requestPasswordReset,
 
 }
 
